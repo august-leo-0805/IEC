@@ -112,15 +112,19 @@ public class PlayerMovement : MonoBehaviour
         if (grounded) 
         {
             rb.linearDamping = groundDrag;
-            isDroppingFromGrapple = false; // 땅에 닿으면 그래플 추락 상태 해제
+            isDroppingFromGrapple = false; 
 
             Dashing dashingScript = GetComponent<Dashing>();
             if (dashingScript != null) dashingScript.ResetDashCount();
         }
         else 
         { 
-            // 🌟 Damping을 원상 복구(0)하여, 대시나 점프 시 앞으로 날아가는 관성이 방해받지 않도록 합니다.
-            rb.linearDamping = 0f; 
+            // 🌟 에러 해결! 존재하지 않는 변수 호출을 지웠습니다.
+            // 대시가 발동 중일 때만 바닥 마찰력을 주고, 그 외의 공중 상태는 모두 0으로 둡니다.
+            if (dashing) 
+                rb.linearDamping = groundDrag;
+            else 
+                rb.linearDamping = 0; 
         }
 
         MyInput();

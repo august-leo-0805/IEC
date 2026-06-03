@@ -28,6 +28,12 @@ public class Dashing : MonoBehaviour
     public bool disableGravity = false;
     public bool resetVel = true;
 
+    // 🌟 새롭게 추가된 공중 관성 조절 시스템
+    [Header("Momentum Settings")]
+    [Range(0f, 1f)]
+    [Tooltip("공중 대시 시 기존 관성을 얼마나 유지할지 설정합니다. (0 = 완전정지, 1 = 100% 유지)")]
+    public float momentumRetention = 0.2f; // 기본값: 기존 속도의 20%만 유지
+
     [Header("Cooldown")]
     public float dashCd;
     private float dashCdTimer;
@@ -46,7 +52,7 @@ public class Dashing : MonoBehaviour
     {
         if (pm != null && pm.isTransitioning) return;
 
-        // 🌟 남은 대시 횟수가 있을 때만 발동
+        // 남은 대시 횟수가 있을 때만 발동
         if (Input.GetKeyDown(dashKey) && dashesLeft > 0 && dashCdTimer <= 0)
             Dash();
 
@@ -59,7 +65,7 @@ public class Dashing : MonoBehaviour
         if (dashCdTimer > 0) return;
         else dashCdTimer = dashCd;
 
-        dashesLeft--; // 🌟 대시 사용 시 횟수 차감
+        dashesLeft--; // 대시 사용 시 횟수 차감
         pm.dashing = true;
 
         // 대시 중에는 그래플 낙하 감속을 꺼줍니다.
@@ -88,8 +94,17 @@ public class Dashing : MonoBehaviour
     private Vector3 delayedForceToApply;
     private void DelayedDashForce()
     {
-        if (resetVel)
+        // 🌟 관성 조절 로직 적용!
+        if (pm.state == PlayerMovement.MovementState.air || pm.state == PlayerMovement.MovementState.grappling)
+        {
+            // 공중이거나 그래플링 중일 때는 인스펙터에서 설정한 배율만큼만 속도를 남깁니다.
+            rb.linearVelocity = rb.linearVelocity * momentumRetention;
+        }
+        else if (resetVel)
+        {
+            // 땅에 있을 때는 기존처럼 속도를 완전히 0으로 만들고 깔끔하게 대시합니다.
             rb.linearVelocity = Vector3.zero;
+        }
 
         rb.AddForce(delayedForceToApply, ForceMode.Impulse);
     }
@@ -124,7 +139,7 @@ public class Dashing : MonoBehaviour
         return direction.normalized;
     }
 
-    // 🌟 외부에서 대시 횟수를 다시 채워줄 때 호출하는 함수
+    // 외부에서 대시 횟수를 다시 채워줄 때 호출하는 함수
     public void ResetDashCount()
     {
         dashesLeft = maxDashes;

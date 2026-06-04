@@ -1,0 +1,120 @@
+﻿-------------
+DOCUMENTATION - https://dotteam.xyz/pdf/Heavy_Station_Kit_2025.pdf
+------------- 
+
+HEAVY STATION KIT
+
+----------------------
+H A N G A R S   2.7 A
+----------------------
+
+- Re-Submitted using Unity 6 LTS;
+- Fix some non-critical bugs.
+
+---
+
+- Re-Submitted using Unity 2022.3 LTS;
+- Updated DotAnimatedTexture.cs with support for HDRP and URP;
+- Updated DotFPCElevator2ConControlItems.cs;
+
+----------------------
+H A N G A R S   2.62 A
+----------------------
+
+- Updated Visuals, including Lighting and Post-Processing;
+- Replaced Sky;
+- Fixed Demo Scenes;
+- Fixed some Textures and Materials;
+- Fixed DotHskGate.cs Script;
+- Reorganized Content to meet Asset Store Specifications.
+
+----------------------
+H A N G A R S   2.60 A
+----------------------
+
+- Re-Submitted using LTS version, Unity 2019.4;
+- Updated FPC and other Scripts;
+- Updated Visuals, including Lighting and Post-Processing;
+- Updated Sounds. All sounds are brand new;
+- Replaced Sky;
+- Added Big Gateway Prefab, W40m x H19m;
+- Added new Demo Scene that showcases an Hangar for a Shuttle;
+- Fixed some Textures and Meshes;
+- Reorganized Content to meet Asset Store Specifications.
+
+----------------------
+H A N G A R S   2.50 A
+----------------------
+
+Supporting Unity 2019.3.0+ with the additional package, which has:
+
+- Dependancy on "Standard Assets Characters Package" removed via deprecating the old/adding the new FPC (Class FPC);
+- Scripts updated with fixes and support for newer Unity versions;
+- All asset classes placed in common namespace DotTeam.HSK.
+
+The other package supporting 5.6.7 to 2019.2.21 is still available for download.
+
+----------------------
+H A N G A R S   2.50 A
+----------------------
+
+SCRIPTING
+Earlier scripts have been corrected and expanded upon, and for widening the possibilities of the kit, new scripts have been created.
+
+Includes Hangars v2.30, PLUS:
+- Added LODs
+- Added 'ForDev' Textures (ID, Height, Curv.)
+- Added Aggregates2
+- Added Garage
+- Added Outside2
+- Added Pipeline1
+- Added Pipeline2
+- Added Top-Down2
+- Gateway Script
+- New Prefabs
+
+--------------------
+H A N G A R S   2.11
+--------------------
+
+MODELING
+A new look for many objects. Flat surfaces were modified with less tris. Round ones like the railings received more. New objects were added to expand your opportunities for creative development.
+
+MAPPING
+To reduce drawcalls, most models were packaged into themes. Each theme uses a single material. Some UVs have a bit of free space, which has been reserved for future updates (thus adding new objects will not require additional materials).
+
+TEXTURING
+All the materials now have Metallic, Height and Occlusion maps, in addition to Albedo, Normal, and if it fits, Emission.
+
+- New Materials
+- Animated Textures
+
+--------------------
+H A N G A R S   1.20
+--------------------
+
+- Overall -50% tris from colliders. Colliders were redone for all prefabs, with box colliders and low poly mesh.
+- Added Top-Down support with new prefabs
+- Added Top-Down Demo Scene
+- Added Six New Objects as prefabs to Props
+- Added One New Object as prefab to Aggregates
+- Added One New Object as prefab to Support
+- Modified Light Source in some Wall prefabs
+- New Metal Material for all Prefabs (identical to one in Heavy Station Kit base)
+- New Skybox.
+
+--------------------
+H A N G A R S   1.10
+--------------------
+
+- Fixed compability issue with Sci-Fi Heavy Station Kit base.
+Previously, because of conflicted identical names of Meshes from different packages, these .fbx where overriding each other. Now names of such .fbx are modified so overriding no longer exists. Naming of corresponding Prefabs is not changed.
+- Dot FPC was modified to be exact copy of Dot FPC from in Heavy Station kit base.
+- Scripts that are necessary for compability were added.
+- No overriding happens at combining two Kits, so Console log is clean.
+- Info file was added to the package with Name and version of package as well as links to Forum, Web-site and e-mail.
+
+
+
+https://dotteam.xyz
+info@dotteam.xyz

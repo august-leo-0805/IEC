@@ -54,6 +54,35 @@ public class Dashing : MonoBehaviour
             dashCdTimer -= Time.deltaTime;
     }
 
+    // private void Dash()
+    // {
+    //     if (dashCdTimer > 0) return;
+    //     else dashCdTimer = dashCd;
+
+    //     pm.dashing = true;
+
+    //     cam.DoFov(dashFov);
+
+    //     Transform forwardT;
+
+    //     if (useCameraForward)
+    //         forwardT = playerCam; /// where you're looking
+    //     else
+    //         forwardT = orientation; /// where you're facing (no up or down)
+
+    //     Vector3 direction = GetDirection(forwardT);
+
+    //     Vector3 forceToApply = direction * dashForce;
+
+    //     if (disableGravity)
+    //         pm.isGraviting = false;
+
+    //     delayedForceToApply = forceToApply;
+    //     Invoke(nameof(DelayedDashForce), 0.025f);
+
+    //     Invoke(nameof(ResetDash), dashDuration);
+    // }
+
     private void Dash()
     {
         if (dashCdTimer > 0) return;
@@ -74,11 +103,12 @@ public class Dashing : MonoBehaviour
         else
             forwardT = orientation; 
 
+        // 2. 방향 계산
         Vector3 direction = GetDirection(forwardT);
         Vector3 forceToApply = direction * dashForce;
 
         if (disableGravity)
-            pm.isGraviting = false;
+            pm.isGraviting = false; // pm의 중력 변수명 오타 주의 (isGraviting -> isGravity 등 확인 필요)
 
         delayedForceToApply = forceToApply;
         Invoke(nameof(DelayedDashForce), 0.025f);
@@ -103,6 +133,24 @@ public class Dashing : MonoBehaviour
             pm.isGraviting = true;
     }
 
+    // private Vector3 GetDirection(Transform forwardT)
+    // {
+    //     float horizontalInput = Input.GetAxisRaw("Horizontal");
+    //     float verticalInput = Input.GetAxisRaw("Vertical");
+
+    //     Vector3 direction = new Vector3();
+
+    //     if (allowAllDirections)
+    //         direction = forwardT.forward * verticalInput + forwardT.right * horizontalInput;
+    //     else
+    //         direction = forwardT.forward;
+
+    //     if (verticalInput == 0 && horizontalInput == 0)
+    //         direction = forwardT.forward;
+
+    //     return direction.normalized;
+    // }
+
     private Vector3 GetDirection(Transform forwardT)
     {
         float horizontalInput = Input.GetAxisRaw("Horizontal");
@@ -121,6 +169,7 @@ public class Dashing : MonoBehaviour
         if (verticalInput == 0 && horizontalInput == 0)
             direction = forwardOnWall;
 
+        direction.y = 0;
         return direction.normalized;
     }
 

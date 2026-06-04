@@ -30,6 +30,10 @@ public class PlayerMovement : MonoBehaviour
     public float airMultiplier;
     bool readyToJump;
 
+    [Header("Interaction")]
+    public Interaction interaction;
+
+
     [Header("Crouching")]
     public float crouchSpeed;
     public float crouchYScale;
@@ -38,6 +42,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Keybinds")]
     public KeyCode sprintKey = KeyCode.LeftShift;
     public KeyCode crouchKey = KeyCode.LeftControl;
+    public KeyCode interactionKey = KeyCode.E;
 
     [Header("Ground Check")]
     public float playerHeight;
@@ -105,8 +110,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (isTransitioning) return; 
-        
+        // 🌟 수정됨: 중력 변환 중에는 모든 움직임 및 입력 억제!
+        if (isTransitioning) return;
+
+        //ground check
         grounded = Physics.Raycast(transform.position, currentGravity.normalized, playerHeight * 0.5f + 0.2f, whatIsGround);
         
         if (grounded) 
@@ -160,6 +167,12 @@ public class PlayerMovement : MonoBehaviour
         {
             transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
             rb.AddForce(currentGravity.normalized * 5f, ForceMode.Impulse);
+        }
+
+        // start interaction
+        if (Input.GetKeyDown(interactionKey) && interaction != null)
+        {
+            interaction.InteractWithTarget();
         }
     }
 
@@ -234,7 +247,7 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.AddForce(GetSlopeMoveDirection(moveDirection) * moveSpeed * 20f, ForceMode.Force);
             if (rb.linearVelocity.y > 0)
-                rb.AddForce(currentGravity.normalized * -80f, ForceMode.Force); 
+                rb.AddForce(currentGravity.normalized * -80f, ForceMode.Force);
         }
         else if (grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
@@ -342,9 +355,9 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)
     {
         Vector3 gravityUp = -currentGravity.normalized;
-        float gravity = -gravityForce;                                                     
-        float displacementY = Vector3.Dot(endPoint - startPoint, gravityUp);               
-        Vector3 displacementXZ = Vector3.ProjectOnPlane(endPoint - startPoint, gravityUp); 
+        float gravity = -gravityForce;
+        float displacementY = Vector3.Dot(endPoint - startPoint, gravityUp);
+        Vector3 displacementXZ = Vector3.ProjectOnPlane(endPoint - startPoint, gravityUp);
 
         if (trajectoryHeight < 0.1f) trajectoryHeight = 0.1f;
         if (trajectoryHeight < displacementY + 1.0f) trajectoryHeight = displacementY + 1.0f; 
@@ -391,23 +404,23 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator RotatePlayerToSurface(Vector3 targetUp, Vector3 contactPoint)
     {
         isTransitioning = true;
-        rb.isKinematic = true; 
+        rb.isKinematic = true;
 
         wallrunning = false;
         cam.DoFov(80f);
         cam.DoTilt(0f);
 
-        cam.enabled = false; 
+        cam.enabled = false;
 
         Behaviour cineBrain = cam.GetComponent("CinemachineBrain") as Behaviour;
         if (cineBrain != null) cineBrain.enabled = false;
 
         Quaternion startBodyRot = transform.rotation;
         Vector3 startPosition = transform.position;
-        Quaternion startCamRot = cam.camHolder.rotation; 
+        Quaternion startCamRot = cam.camHolder.rotation;
 
         float currentDist = Vector3.Dot(transform.position - contactPoint, targetUp);
-        float desiredDist = playerHeight * 0.5f + 0.1f; 
+        float desiredDist = playerHeight * 0.5f + 0.1f;
         Vector3 targetPosition = transform.position + targetUp * (desiredDist - currentDist);
 
         Vector3 currentForward = cam.camHolder.forward;
@@ -416,11 +429,14 @@ public class PlayerMovement : MonoBehaviour
             newForward = Vector3.ProjectOnPlane(transform.up, targetUp).normalized;
 
         fixedWallRotation = Quaternion.LookRotation(newForward, targetUp);
-        
+
         Quaternion targetCamRot;
-        if (Mathf.Abs(Vector3.Dot(currentForward, targetUp)) > 0.99f) {
+        if (Mathf.Abs(Vector3.Dot(currentForward, targetUp)) > 0.99f)
+        {
             targetCamRot = fixedWallRotation;
-        } else {
+        }
+        else
+        {
             targetCamRot = Quaternion.LookRotation(currentForward, targetUp);
         }
 
@@ -436,11 +452,11 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
         }
 
-        transform.position = targetPosition; 
+        transform.position = targetPosition;
         transform.rotation = fixedWallRotation;
         cam.camHolder.rotation = targetCamRot;
 
-        if (targetUp == Vector3.up) 
+        if (targetUp == Vector3.up)
         {
             Vector3 finalCamForward = targetCamRot * Vector3.forward;
             float finalYaw = Mathf.Atan2(finalCamForward.x, finalCamForward.z) * Mathf.Rad2Deg;
@@ -449,7 +465,7 @@ public class PlayerMovement : MonoBehaviour
             cam.yRotation = finalYaw / 2f; 
             cam.xRotation = finalPitch;
         }
-        else 
+        else
         {
             cam.xRotation = 0f;
             cam.yRotation = 0f;
@@ -667,7 +683,7 @@ public class PlayerMovement : MonoBehaviour
 //             moveSpeed = 0;
 //             rb.linearVelocity = Vector3.zero;
 //         }
-        
+
 //         // Mode - Dashing
 //         else if (dashing)
 //         {
@@ -681,7 +697,7 @@ public class PlayerMovement : MonoBehaviour
 //             state = MovementState.wallrunning;
 //             desiredMoveSpeed = wallrunSpeed;
 //         }
-        
+
 
 //         // Mode - Sliding
 //         else if (sliding)
@@ -887,7 +903,7 @@ public class PlayerMovement : MonoBehaviour
 //         return Vector3.ProjectOnPlane(direction, slopeHit.normal).normalized;
 //     }
 
-    
+
 //     private Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)
 //     {
 //         Vector3 gravityUp = -currentGravity.normalized;

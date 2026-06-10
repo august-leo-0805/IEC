@@ -15,7 +15,7 @@ public class Dashing : MonoBehaviour
     public float dashDuration;
 
     [Header("Dash Limits")]
-    public int maxDashes = 1; // 🌟 최대 연속 대시 횟수
+    public int maxDashes = 1;
     private int dashesLeft;
 
     [Header("CameraEffects")]
@@ -28,11 +28,17 @@ public class Dashing : MonoBehaviour
     public bool disableGravity = false;
     public bool resetVel = true;
 
+<<<<<<< Updated upstream
     // 🌟 새롭게 추가된 공중 관성 조절 시스템
     [Header("Momentum Settings")]
     [Range(0f, 1f)]
     [Tooltip("공중 대시 시 기존 관성을 얼마나 유지할지 설정합니다. (0 = 완전정지, 1 = 100% 유지)")]
     public float momentumRetention = 0.2f; // 기본값: 기존 속도의 20%만 유지
+=======
+    [Header("Momentum Settings")]
+    [Range(0f, 1f)]
+    public float momentumRetention = 0.2f;
+>>>>>>> Stashed changes
 
     [Header("Cooldown")]
     public float dashCd;
@@ -45,14 +51,17 @@ public class Dashing : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         pm = GetComponent<PlayerMovement>();
-        dashesLeft = maxDashes; // 초기화
+        dashesLeft = maxDashes;
     }
 
     private void Update()
     {
         if (pm != null && pm.isTransitioning) return;
 
+<<<<<<< Updated upstream
         // 남은 대시 횟수가 있을 때만 발동
+=======
+>>>>>>> Stashed changes
         if (Input.GetKeyDown(dashKey) && dashesLeft > 0 && dashCdTimer <= 0)
             Dash();
 
@@ -65,20 +74,31 @@ public class Dashing : MonoBehaviour
         if (dashCdTimer > 0) return;
         else dashCdTimer = dashCd;
 
+<<<<<<< Updated upstream
         dashesLeft--; // 대시 사용 시 횟수 차감
+=======
+        dashesLeft--;
+>>>>>>> Stashed changes
         pm.dashing = true;
 
-        // 대시 중에는 그래플 낙하 감속을 꺼줍니다.
-        pm.isDroppingFromGrapple = false; 
+        // 🌟 수정 1: 그래플 상태 강제 리셋 (무한 가속도 우주 발사 버그 완벽 차단!)
+        // 속도 제한(SpeedControl)을 마비시키던 그래플 상태를 대시 시점에 강제로 해제합니다.
+        if (pm.activeGrapple || pm.grappling)
+        {
+            pm.activeGrapple = false;
+            GetComponent<Grappling>().StopGrapple();
+        }
+
+        pm.isDroppingFromGrapple = false;
 
         cam.DoFov(dashFov);
 
         Transform forwardT;
 
         if (useCameraForward)
-            forwardT = playerCam; 
+            forwardT = playerCam;
         else
-            forwardT = orientation; 
+            forwardT = orientation;
 
         Vector3 direction = GetDirection(forwardT);
         Vector3 forceToApply = direction * dashForce;
@@ -94,15 +114,23 @@ public class Dashing : MonoBehaviour
     private Vector3 delayedForceToApply;
     private void DelayedDashForce()
     {
+<<<<<<< Updated upstream
         // 🌟 관성 조절 로직 적용!
         if (pm.state == PlayerMovement.MovementState.air || pm.state == PlayerMovement.MovementState.grappling)
         {
             // 공중이거나 그래플링 중일 때는 인스펙터에서 설정한 배율만큼만 속도를 남깁니다.
+=======
+        if (pm.state == PlayerMovement.MovementState.air || pm.state == PlayerMovement.MovementState.grappling)
+        {
+>>>>>>> Stashed changes
             rb.linearVelocity = rb.linearVelocity * momentumRetention;
         }
         else if (resetVel)
         {
+<<<<<<< Updated upstream
             // 땅에 있을 때는 기존처럼 속도를 완전히 0으로 만들고 깔끔하게 대시합니다.
+=======
+>>>>>>> Stashed changes
             rb.linearVelocity = Vector3.zero;
         }
 
@@ -136,10 +164,19 @@ public class Dashing : MonoBehaviour
         if (verticalInput == 0 && horizontalInput == 0)
             direction = forwardOnWall;
 
+<<<<<<< Updated upstream
         return direction.normalized;
     }
 
     // 외부에서 대시 횟수를 다시 채워줄 때 호출하는 함수
+=======
+        // 🚨 수정 2: direction.y = 0; 삭제!!
+        // 이 한 줄 때문에 벽에서 W(앞)를 누르면 Y축 상승이 잘려나가고 옆으로만 튕겨 나갔던 것입니다!
+
+        return direction.normalized;
+    }
+
+>>>>>>> Stashed changes
     public void ResetDashCount()
     {
         dashesLeft = maxDashes;
@@ -160,8 +197,11 @@ public class Dashing : MonoBehaviour
 
 //     [Header("Dashing")]
 //     public float dashForce;
-
 //     public float dashDuration;
+
+//     [Header("Dash Limits")]
+//     public int maxDashes = 1; // 🌟 최대 연속 대시 횟수
+//     private int dashesLeft;
 
 //     [Header("CameraEffects")]
 //     public PlayerCam cam;
@@ -184,46 +224,79 @@ public class Dashing : MonoBehaviour
 //     {
 //         rb = GetComponent<Rigidbody>();
 //         pm = GetComponent<PlayerMovement>();
+//         dashesLeft = maxDashes; // 초기화
 //     }
 
 //     private void Update()
 //     {
-//         // 🌟 수정됨: 중력 변환으로 화면이 돌아가는 도중 대시가 나가는 것을 차단!
 //         if (pm != null && pm.isTransitioning) return;
 
-//         if (Input.GetKeyDown(dashKey))
+//         // 🌟 남은 대시 횟수가 있을 때만 발동
+//         if (Input.GetKeyDown(dashKey) && dashesLeft > 0 && dashCdTimer <= 0)
 //             Dash();
 
 //         if (dashCdTimer > 0)
 //             dashCdTimer -= Time.deltaTime;
 //     }
 
+//     // private void Dash()
+//     // {
+//     //     if (dashCdTimer > 0) return;
+//     //     else dashCdTimer = dashCd;
+
+//     //     pm.dashing = true;
+
+//     //     cam.DoFov(dashFov);
+
+//     //     Transform forwardT;
+
+//     //     if (useCameraForward)
+//     //         forwardT = playerCam; /// where you're looking
+//     //     else
+//     //         forwardT = orientation; /// where you're facing (no up or down)
+
+//     //     Vector3 direction = GetDirection(forwardT);
+
+//     //     Vector3 forceToApply = direction * dashForce;
+
+//     //     if (disableGravity)
+//     //         pm.isGraviting = false;
+
+//     //     delayedForceToApply = forceToApply;
+//     //     Invoke(nameof(DelayedDashForce), 0.025f);
+
+//     //     Invoke(nameof(ResetDash), dashDuration);
+//     // }
+
 //     private void Dash()
 //     {
 //         if (dashCdTimer > 0) return;
 //         else dashCdTimer = dashCd;
 
+//         dashesLeft--; // 🌟 대시 사용 시 횟수 차감
 //         pm.dashing = true;
+
+//         // 대시 중에는 그래플 낙하 감속을 꺼줍니다.
+//         pm.isDroppingFromGrapple = false; 
 
 //         cam.DoFov(dashFov);
 
 //         Transform forwardT;
 
 //         if (useCameraForward)
-//             forwardT = playerCam; /// where you're looking
+//             forwardT = playerCam; 
 //         else
-//             forwardT = orientation; /// where you're facing (no up or down)
+//             forwardT = orientation; 
 
+//         // 2. 방향 계산
 //         Vector3 direction = GetDirection(forwardT);
-
 //         Vector3 forceToApply = direction * dashForce;
 
 //         if (disableGravity)
-//             pm.isGraviting = false;
+//             pm.isGraviting = false; // pm의 중력 변수명 오타 주의 (isGraviting -> isGravity 등 확인 필요)
 
 //         delayedForceToApply = forceToApply;
 //         Invoke(nameof(DelayedDashForce), 0.025f);
-
 //         Invoke(nameof(ResetDash), dashDuration);
 //     }
 
@@ -239,19 +312,35 @@ public class Dashing : MonoBehaviour
 //     private void ResetDash()
 //     {
 //         pm.dashing = false;
-
 //         cam.DoFov(80f);
 
 //         if (disableGravity)
 //             pm.isGraviting = true;
 //     }
 
+//     // private Vector3 GetDirection(Transform forwardT)
+//     // {
+//     //     float horizontalInput = Input.GetAxisRaw("Horizontal");
+//     //     float verticalInput = Input.GetAxisRaw("Vertical");
+
+//     //     Vector3 direction = new Vector3();
+
+//     //     if (allowAllDirections)
+//     //         direction = forwardT.forward * verticalInput + forwardT.right * horizontalInput;
+//     //     else
+//     //         direction = forwardT.forward;
+
+//     //     if (verticalInput == 0 && horizontalInput == 0)
+//     //         direction = forwardT.forward;
+
+//     //     return direction.normalized;
+//     // }
+
 //     private Vector3 GetDirection(Transform forwardT)
 //     {
 //         float horizontalInput = Input.GetAxisRaw("Horizontal");
 //         float verticalInput = Input.GetAxisRaw("Vertical");
 
-//         // 🌟 수정됨: 3D 절대 방향이 아닌, 현재 중력(벽면) 기준 평면으로 투영시켜 완벽한 축을 찾습니다.
 //         Vector3 forwardOnWall = Vector3.ProjectOnPlane(forwardT.forward, pm.currentGravity).normalized;
 //         Vector3 rightOnWall = Vector3.ProjectOnPlane(forwardT.right, pm.currentGravity).normalized;
 
@@ -265,6 +354,14 @@ public class Dashing : MonoBehaviour
 //         if (verticalInput == 0 && horizontalInput == 0)
 //             direction = forwardOnWall;
 
+//         direction.y = 0;
 //         return direction.normalized;
 //     }
+
+//     // 🌟 외부에서 대시 횟수를 다시 채워줄 때 호출하는 함수
+//     public void ResetDashCount()
+//     {
+//         dashesLeft = maxDashes;
+//     }
 // }
+

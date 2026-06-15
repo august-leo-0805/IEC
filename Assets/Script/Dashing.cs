@@ -9,13 +9,14 @@ public class Dashing : MonoBehaviour
     public Transform playerCam;
     private Rigidbody rb;
     private PlayerMovement pm;
+    public ParticleSystem dashEffect;
 
     [Header("Dashing")]
     public float dashForce;
     public float dashDuration;
 
     [Header("Dash Limits")]
-    public int maxDashes = 1; // 🌟 최대 연속 대시 횟수
+    public int maxDashes = 1;
     private int dashesLeft;
 
     [Header("CameraEffects")]
@@ -86,22 +87,24 @@ public class Dashing : MonoBehaviour
     private void Dash()
     {
         if (dashCdTimer > 0) return;
-        else dashCdTimer = dashCd;
 
+
+        else dashCdTimer = dashCd;
+        dashEffect.Play(); // 대시 이펙트 재생
         dashesLeft--; // 🌟 대시 사용 시 횟수 차감
         pm.dashing = true;
 
         // 대시 중에는 그래플 낙하 감속을 꺼줍니다.
-        pm.isDroppingFromGrapple = false; 
+        pm.isDroppingFromGrapple = false;
 
         cam.DoFov(dashFov);
 
         Transform forwardT;
 
         if (useCameraForward)
-            forwardT = playerCam; 
+            forwardT = playerCam;
         else
-            forwardT = orientation; 
+            forwardT = orientation;
 
         // 2. 방향 계산
         Vector3 direction = GetDirection(forwardT);

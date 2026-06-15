@@ -66,17 +66,20 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveDirection;
     Rigidbody rb;
 
+    [Header("Animator")]
+    public Animator anim;
+
     public MovementState state;
     public enum MovementState
     {
         freeze, walking, sprinting, wallrunning, crouching, dashing, sliding, grappling, swinging, air,
     }
-    
+
     public bool swinging;
     public bool dashing;
     public bool sliding;
     public bool wallrunning;
-    public bool crouching;          
+    public bool crouching;
     public bool freeze;
     public bool activeGrapple;
     public bool grappling;
@@ -94,18 +97,21 @@ public class PlayerMovement : MonoBehaviour
     [Header("Fall Speed Limits")]
     public bool isDroppingFromGrapple = false;
     [Tooltip("일반적으로 높은 곳에서 떨어질 때의 최고 속도 (뚝뚝 끊김 방지용)")]
-    public float maxFallSpeed = 25f; 
+    public float maxFallSpeed = 25f;
     [Tooltip("그래플링이 끝난 직후 떨어질 때의 최고 속도 (더 천천히 떨어지도록 설정)")]
-    public float maxGrappleFallSpeed = 10f; 
+    public float maxGrappleFallSpeed = 10f;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        rb.useGravity = false; 
+        rb.useGravity = false;
 
         readyToJump = true;
         startYScale = transform.localScale.y;
+
+        // 자식 오브젝트에서 애니메이터 컴포넌트 획득
+        anim = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -115,8 +121,8 @@ public class PlayerMovement : MonoBehaviour
 
         //ground check
         grounded = Physics.Raycast(transform.position, currentGravity.normalized, playerHeight * 0.5f + 0.2f, whatIsGround);
-        
-        if (grounded) 
+
+        if (grounded)
         {
             rb.linearDamping = groundDrag;
             isDroppingFromGrapple = false; // 땅에 닿으면 그래플 추락 상태 해제
@@ -124,10 +130,10 @@ public class PlayerMovement : MonoBehaviour
             Dashing dashingScript = GetComponent<Dashing>();
             if (dashingScript != null) dashingScript.ResetDashCount();
         }
-        else 
-        { 
+        else
+        {
             // 🌟 Damping을 원상 복구(0)하여, 대시나 점프 시 앞으로 날아가는 관성이 방해받지 않도록 합니다.
-            rb.linearDamping = 0f; 
+            rb.linearDamping = 0f;
         }
 
         MyInput();
@@ -194,6 +200,9 @@ public class PlayerMovement : MonoBehaviour
         else if (grounded) { state = MovementState.walking; desiredMoveSpeed = walkSpeed; }
         else state = MovementState.air;
 
+        // 🌟 [애니메이션 실행 제어부 삽입]
+        AnimatePlayer();
+
         bool desiredMoveSpeedHasChanged = desiredMoveSpeed != lastDesiredMoveSpeed;
         if (lastState == MovementState.dashing) keepMomentum = true;
 
@@ -210,6 +219,34 @@ public class PlayerMovement : MonoBehaviour
                 moveSpeed = desiredMoveSpeed;
             }
         }
+
+        lastState = state; // 상태 추적용 백업
+    }
+
+    /// <summary>
+    /// 결정된 MovementState에 따라 애니메이터 파라미터 셋팅
+    /// </summary>
+    private void AnimatePlayer()
+    {
+        if (anim == null) return;
+
+        // 현재 수평 속도 계산 (블렌드 트리 구동용 파라미터가 있을 경우 사용)
+        Vector3 flatVel = Vector3.ProjectOnPlane(rb.linearVelocity, currentGravity);
+        float currentSpeed = flatVel.magnitude;
+        anim.SetFloat("MoveSpeed", currentSpeed);
+
+        // 정수형(Int) 파라미터 1개로 상태 변화를 제어하는 방식 (추천: 애니메이터 내에서 정수 조건 전이 규칙 생성)
+        anim.SetInteger("MovementState", (int)state);
+
+        // 개별 개별 Bool 파라미터 형태로 제어하는 방식 (CyberSoldier 세팅 방식에 맞춰 택일)
+        anim.SetBool("isGrounded", grounded);
+        anim.SetBool("isWalking", state == MovementState.walking);
+        anim.SetBool("isSprinting", state == MovementState.sprinting);
+        anim.SetBool("isWallrunning", state == MovementState.wallrunning);
+        anim.SetBool("isSliding", state == MovementState.sliding);
+        anim.SetBool("isCrouching", state == MovementState.crouching);
+        anim.SetBool("isDashing", state == MovementState.dashing);
+        anim.SetBool("isAir", state == MovementState.air);
     }
 
     private IEnumerator SmoothlyLerpMoveSpeed()
@@ -317,7 +354,7 @@ public class PlayerMovement : MonoBehaviour
     {
         activeGrapple = true;
         velocityToSet = CalculateJumpVelocity(transform.position, targetPosition, trajectoryHeight);
-        SetVelocity(); 
+        SetVelocity();
         Invoke(nameof(ResetRestrictions), 3f);
     }
 
@@ -326,7 +363,7 @@ public class PlayerMovement : MonoBehaviour
     {
         enableMovementOnNextTouch = true;
         rb.useGravity = false;
-        rb.linearDamping = 0f; 
+        rb.linearDamping = 0f;
         rb.linearVelocity = velocityToSet;
         cam.DoFov(grappleFov);
     }
@@ -351,7 +388,7 @@ public class PlayerMovement : MonoBehaviour
     {
         return Vector3.ProjectOnPlane(direction, slopeHit.normal).normalized;
     }
-    
+
     private Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)
     {
         Vector3 gravityUp = -currentGravity.normalized;
@@ -360,14 +397,14 @@ public class PlayerMovement : MonoBehaviour
         Vector3 displacementXZ = Vector3.ProjectOnPlane(endPoint - startPoint, gravityUp);
 
         if (trajectoryHeight < 0.1f) trajectoryHeight = 0.1f;
-        if (trajectoryHeight < displacementY + 1.0f) trajectoryHeight = displacementY + 1.0f; 
+        if (trajectoryHeight < displacementY + 1.0f) trajectoryHeight = displacementY + 1.0f;
 
-        float time = Mathf.Sqrt(Mathf.Abs(-2 * trajectoryHeight / gravity)) 
+        float time = Mathf.Sqrt(Mathf.Abs(-2 * trajectoryHeight / gravity))
                    + Mathf.Sqrt(Mathf.Abs(2 * (displacementY - trajectoryHeight) / gravity));
-        
+
         if (time < 0.01f) time = 0.01f;
 
-        Vector3 velocityY = gravityUp * Mathf.Sqrt(Mathf.Abs(-2 * gravity * trajectoryHeight));      
+        Vector3 velocityY = gravityUp * Mathf.Sqrt(Mathf.Abs(-2 * gravity * trajectoryHeight));
         Vector3 velocityXZ = displacementXZ / time;
 
         return velocityXZ + velocityY;
@@ -392,8 +429,8 @@ public class PlayerMovement : MonoBehaviour
             if (currentGravity != -wallNormal)
             {
                 currentGravity = -wallNormal;
-                lastGravityChangeTime = Time.time; 
-                rb.linearVelocity = Vector3.zero; 
+                lastGravityChangeTime = Time.time;
+                rb.linearVelocity = Vector3.zero;
 
                 if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
                 rotationCoroutine = StartCoroutine(RotatePlayerToSurface(wallNormal, contactPoint));
@@ -425,7 +462,7 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 currentForward = cam.camHolder.forward;
         Vector3 newForward = Vector3.ProjectOnPlane(currentForward, targetUp).normalized;
-        if (newForward.sqrMagnitude < 0.01f) 
+        if (newForward.sqrMagnitude < 0.01f)
             newForward = Vector3.ProjectOnPlane(transform.up, targetUp).normalized;
 
         fixedWallRotation = Quaternion.LookRotation(newForward, targetUp);
@@ -446,7 +483,7 @@ public class PlayerMovement : MonoBehaviour
         while (time < 1f)
         {
             time += Time.deltaTime / duration;
-            transform.position = Vector3.Lerp(startPosition, targetPosition, time); 
+            transform.position = Vector3.Lerp(startPosition, targetPosition, time);
             transform.rotation = Quaternion.Slerp(startBodyRot, fixedWallRotation, time);
             cam.camHolder.rotation = Quaternion.Slerp(startCamRot, targetCamRot, time);
             yield return null;
@@ -462,7 +499,7 @@ public class PlayerMovement : MonoBehaviour
             float finalYaw = Mathf.Atan2(finalCamForward.x, finalCamForward.z) * Mathf.Rad2Deg;
             float finalPitch = -Mathf.Asin(finalCamForward.y) * Mathf.Rad2Deg;
 
-            cam.yRotation = finalYaw / 2f; 
+            cam.yRotation = finalYaw / 2f;
             cam.xRotation = finalPitch;
         }
         else
@@ -471,9 +508,9 @@ public class PlayerMovement : MonoBehaviour
             cam.yRotation = 0f;
         }
 
-        if (cineBrain != null) cineBrain.enabled = true; 
-        cam.enabled = true; 
-        rb.isKinematic = false; 
+        if (cineBrain != null) cineBrain.enabled = true;
+        cam.enabled = true;
+        rb.isKinematic = false;
         isTransitioning = false;
     }
 
@@ -605,7 +642,7 @@ public class PlayerMovement : MonoBehaviour
 //     {
 //         rb = GetComponent<Rigidbody>();
 //         rb.freezeRotation = true;
-        
+
 //         rb.useGravity = false; 
 
 //         readyToJump = true;
@@ -616,7 +653,7 @@ public class PlayerMovement : MonoBehaviour
 //     {
 //         // 🌟 수정됨: 중력 변환 중에는 모든 움직임 및 입력 억제!
 //         if (isTransitioning) return; 
-        
+
 //         //ground check
 //         grounded = Physics.Raycast(transform.position, currentGravity.normalized, playerHeight * 0.5f + 0.2f, whatIsGround);
 //         Debug.DrawRay(transform.position, currentGravity.normalized * (playerHeight * 0.5f + 0.2f), Color.red);
@@ -872,7 +909,7 @@ public class PlayerMovement : MonoBehaviour
 //     private void SetVelocity()
 //     {
 //         enableMovementOnNextTouch = true;
-        
+
 //         rb.useGravity = false;
 //         rb.linearDamping = 0f; 
 
@@ -944,7 +981,7 @@ public class PlayerMovement : MonoBehaviour
 //             {
 //                 currentGravity = -wallNormal;
 //                 lastGravityChangeTime = Time.time; 
-                
+
 //                 rb.linearVelocity = Vector3.zero; 
 
 //                 if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
@@ -985,7 +1022,7 @@ public class PlayerMovement : MonoBehaviour
 //         }
 
 //         fixedWallRotation = Quaternion.LookRotation(newForward, targetUp);
-        
+
 //         Quaternion targetCamRot;
 //         if (Mathf.Abs(Vector3.Dot(currentForward, targetUp)) > 0.99f) {
 //             targetCamRot = fixedWallRotation;
@@ -999,10 +1036,10 @@ public class PlayerMovement : MonoBehaviour
 //         while (time < 1f)
 //         {
 //             time += Time.deltaTime / duration;
-            
+
 //             transform.position = Vector3.Lerp(startPosition, targetPosition, time); 
 //             transform.rotation = Quaternion.Slerp(startBodyRot, fixedWallRotation, time);
-            
+
 //             // 트랜지션 중에는 강제로 카메라의 월드 각도를 돌려줍니다.
 //             cam.camHolder.rotation = Quaternion.Slerp(startCamRot, targetCamRot, time);
 
@@ -1023,7 +1060,7 @@ public class PlayerMovement : MonoBehaviour
 //             // 유저님의 하이어라키 구조상 yRotation이 player와 camHolder에 두 번 들어가서 실제 화면은 2배로 돌아갑니다.
 //             // 따라서 우리가 구한 '진짜 월드 각도(finalYaw)'의 절반(/2f)만 넣어주어야 화면이 튀지 않고 딱 맞게 떨어집니다!
 //             cam.yRotation = finalYaw / 2f;
-            
+
 //             // xRotation(위아래 고개)은 camHolder에만 적용되므로 그대로 넣어줍니다.
 //             cam.xRotation = finalPitch;
 //         }

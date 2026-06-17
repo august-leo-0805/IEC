@@ -30,15 +30,8 @@ public class PlayerMovement : MonoBehaviour
     public float airMultiplier;
     bool readyToJump;
 
-
     [Header("Interaction")]
     public Interaction interaction;
-
-
-
-    [Header("Interaction")]
-    public Interaction interaction;
-
 
     [Header("Crouching")]
     public float crouchSpeed;
@@ -48,7 +41,6 @@ public class PlayerMovement : MonoBehaviour
     [Header("Keybinds")]
     public KeyCode sprintKey = KeyCode.LeftShift;
     public KeyCode crouchKey = KeyCode.LeftControl;
-    public KeyCode interactionKey = KeyCode.E;
 
     [Header("Ground Check")]
     public float playerHeight;
@@ -71,9 +63,6 @@ public class PlayerMovement : MonoBehaviour
     float verticalInput;
     Vector3 moveDirection;
     Rigidbody rb;
-
-    [Header("Animator")]
-    public Animator anim;
 
     public MovementState state;
     public enum MovementState
@@ -114,21 +103,11 @@ public class PlayerMovement : MonoBehaviour
 
         readyToJump = true;
         startYScale = transform.localScale.y;
-
-        // 자식 오브젝트에서 애니메이터 컴포넌트 획득
-        anim = GetComponentInChildren<Animator>();
     }
 
     private void Update()
     {
-
-        // 🌟 수정됨: 중력 변환 중에는 모든 움직임 및 입력 억제!
         if (isTransitioning) return;
-
-        //ground check
-
-        if (isTransitioning) return;
-
 
         grounded = Physics.Raycast(transform.position, currentGravity.normalized, playerHeight * 0.5f + 0.2f, whatIsGround);
 
@@ -140,17 +119,14 @@ public class PlayerMovement : MonoBehaviour
             Dashing dashingScript = GetComponent<Dashing>();
             if (dashingScript != null) dashingScript.ResetDashCount();
         }
-
         else
         {
-            // 🌟 Damping을 원상 복구(0)하여, 대시나 점프 시 앞으로 날아가는 관성이 방해받지 않도록 합니다.
             rb.linearDamping = 0f;
-
+        }
 
         MyInput();
         SpeedControl();
         StateHandler();
-        }
     }
 
     private void FixedUpdate()
@@ -187,15 +163,11 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
             if (grounded) rb.AddForce(currentGravity.normalized * 5f, ForceMode.Impulse);
         }
-
-
-        // start interaction
-
-        if (Input.GetKeyDown(interactionKey) && interaction != null)
-        {
-            interaction.InteractWithTarget();
-        }
-
+        /*
+                if (Input.GetKeyDown(interactionKey) && interaction != null)
+                {
+                    interaction.InteractWithTarget();
+                }*/
     }
 
     private void StateHandler()
@@ -216,9 +188,6 @@ public class PlayerMovement : MonoBehaviour
         else if (grounded) { state = MovementState.walking; desiredMoveSpeed = walkSpeed; }
         else state = MovementState.air;
 
-        // 🌟 [애니메이션 실행 제어부 삽입]
-        AnimatePlayer();
-
         bool desiredMoveSpeedHasChanged = desiredMoveSpeed != lastDesiredMoveSpeed;
         if (lastState == MovementState.dashing) keepMomentum = true;
 
@@ -235,34 +204,6 @@ public class PlayerMovement : MonoBehaviour
                 moveSpeed = desiredMoveSpeed;
             }
         }
-
-        lastState = state; // 상태 추적용 백업
-    }
-
-    /// <summary>
-    /// 결정된 MovementState에 따라 애니메이터 파라미터 셋팅
-    /// </summary>
-    private void AnimatePlayer()
-    {
-        if (anim == null) return;
-
-        // 현재 수평 속도 계산 (블렌드 트리 구동용 파라미터가 있을 경우 사용)
-        Vector3 flatVel = Vector3.ProjectOnPlane(rb.linearVelocity, currentGravity);
-        float currentSpeed = flatVel.magnitude;
-        anim.SetFloat("MoveSpeed", currentSpeed);
-
-        // 정수형(Int) 파라미터 1개로 상태 변화를 제어하는 방식 (추천: 애니메이터 내에서 정수 조건 전이 규칙 생성)
-        anim.SetInteger("MovementState", (int)state);
-
-        // 개별 개별 Bool 파라미터 형태로 제어하는 방식 (CyberSoldier 세팅 방식에 맞춰 택일)
-        anim.SetBool("isGrounded", grounded);
-        anim.SetBool("isWalking", state == MovementState.walking);
-        anim.SetBool("isSprinting", state == MovementState.sprinting);
-        anim.SetBool("isWallrunning", state == MovementState.wallrunning);
-        anim.SetBool("isSliding", state == MovementState.sliding);
-        anim.SetBool("isCrouching", state == MovementState.crouching);
-        anim.SetBool("isDashing", state == MovementState.dashing);
-        anim.SetBool("isAir", state == MovementState.air);
     }
 
     private IEnumerator SmoothlyLerpMoveSpeed()

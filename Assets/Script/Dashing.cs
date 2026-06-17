@@ -9,7 +9,6 @@ public class Dashing : MonoBehaviour
     public Transform playerCam;
     private Rigidbody rb;
     private PlayerMovement pm;
-    public ParticleSystem dashEffect;
 
     [Header("Dashing")]
     public float dashForce;
@@ -61,15 +60,7 @@ public class Dashing : MonoBehaviour
     private void Dash()
     {
         if (dashCdTimer > 0) return;
-
-
-
         else dashCdTimer = dashCd;
-        dashEffect.Play(); // 대시 이펙트 재생
-        dashesLeft--; // 🌟 대시 사용 시 횟수 차감
-        pm.dashing = true;
-
-        // 대시 중에는 그래플 낙하 감속을 꺼줍니다.
 
         dashesLeft--;
         pm.dashing = true;
@@ -93,12 +84,11 @@ public class Dashing : MonoBehaviour
         else
             forwardT = orientation;
 
-        // 2. 방향 계산
         Vector3 direction = GetDirection(forwardT);
         Vector3 forceToApply = direction * dashForce;
 
         if (disableGravity)
-            pm.isGraviting = false; // pm의 중력 변수명 오타 주의 (isGraviting -> isGravity 등 확인 필요)
+            pm.isGraviting = false;
 
         delayedForceToApply = forceToApply;
         Invoke(nameof(DelayedDashForce), 0.025f);
@@ -128,7 +118,33 @@ public class Dashing : MonoBehaviour
         if (disableGravity)
             pm.isGraviting = true;
     }
+
+    private Vector3 GetDirection(Transform forwardT)
+    {
+        float horizontalInput = Input.GetAxisRaw("Horizontal");
+        float verticalInput = Input.GetAxisRaw("Vertical");
+
+        Vector3 forwardOnWall = Vector3.ProjectOnPlane(forwardT.forward, pm.currentGravity).normalized;
+        Vector3 rightOnWall = Vector3.ProjectOnPlane(forwardT.right, pm.currentGravity).normalized;
+
+        Vector3 direction = new Vector3();
+
+        if (allowAllDirections)
+            direction = (forwardOnWall * verticalInput) + (rightOnWall * horizontalInput);
+        else
+            direction = forwardOnWall;
+
+        if (verticalInput == 0 && horizontalInput == 0)
+            direction = forwardOnWall;
+
+        // 🚨 수정 2: direction.y = 0; 삭제!!
+        // 이 한 줄 때문에 벽에서 W(앞)를 누르면 Y축 상승이 잘려나가고 옆으로만 튕겨 나갔던 것입니다!
+
+        return direction.normalized;
     }
 
-    
-
+    public void ResetDashCount()
+    {
+        dashesLeft = maxDashes;
+    }
+}

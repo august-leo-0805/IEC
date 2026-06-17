@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PlayerRespawn : MonoBehaviour
 {
+    public int playerCurDeath = 0;
     private Vector3 lastCheckpointPos;
     private CheckPoint lastCheckpoint;
 
@@ -31,5 +32,6 @@ public class PlayerRespawn : MonoBehaviour
     public void ReSpawn()
     {
         transform.position = lastCheckpointPos;
+        playerCurDeath++;
     }
 }
